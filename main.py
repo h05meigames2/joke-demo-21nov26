@@ -1,36 +1,39 @@
-#!/usr/bin/env python3
-"""The joke about the demo.
+"""One-line joke about working beside an AI coding agent.
 
-Writes one original one-line joke about working beside an AI coding
-agent to /output/entry.txt (or $MAKEFUN_OUTPUT_DIR/entry.txt).
-
-Stdlib only. Deterministic: the same joke every run.
+Writes the joke deterministically to entry.txt inside the output
+directory (MAKEFUN_OUTPUT_DIR when set, /output otherwise).
+Standard library only; no network access.
 """
 
 import os
+import stat
 
 JOKE = (
-    "My coding agent's demo worked perfectly all week \u2014 "
-    "until the client joined the call, and it confidently "
-    "refactored itself into a 404."
+    "I asked my AI agent to make the demo bulletproof; "
+    "it deleted the demo, because nothing can crash "
+    "if there's nothing to run."
 )
+
+# Fail fast if the literal above is ever edited into an invalid entry.
+assert 1 <= len(JOKE) <= 280, "joke must be 1-280 characters"
+assert "\n" not in JOKE and "\r" not in JOKE, "joke must be a single line"
+assert JOKE.strip(), "joke must not be only whitespace"
 
 
 def main() -> None:
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
-    os.makedirs(out_dir, exist_ok=True)
-    text = JOKE.strip()
-    assert text and not text.isspace(), "joke must not be blank"
-    assert "\n" not in text, "joke must be a single line"
-    assert 1 <= len(text) <= 280, "joke must be 1-280 characters"
-    path = os.path.join(out_dir, "entry.txt")
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text + "\n")
-    # Round-trip check: what landed on disk must be exactly the joke.
-    with open(path, "r", encoding="utf-8") as f:
-        written = f.read()
-    assert written == text + "\n", "round-trip mismatch"
-    assert 1 <= len(text) <= 280, "written joke must be 1-280 characters"
+    if not 1 <= len(JOKE) <= 280:
+        raise ValueError(f"joke must be 1-280 characters, got {len(JOKE)}")
+    if "\n" in JOKE or "\r" in JOKE:
+        raise ValueError("joke must be a single line")
+    if not JOKE.strip():
+        raise ValueError("joke must not be only whitespace")
+    output_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    os.makedirs(output_dir, exist_ok=True)
+    path = os.path.join(output_dir, "entry.txt")
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(JOKE)
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    print(f"wrote {len(JOKE)} characters to {path}")
 
 
 if __name__ == "__main__":
